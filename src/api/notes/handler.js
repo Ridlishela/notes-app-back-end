@@ -1,8 +1,10 @@
+const ClientError = require("../../exceptions/ClientError");
 
 class NotesHandler {
-  constructor(service) {
+  constructor(service, validator) {
     this._service = service; //penggunaan underscore(_) dipertimbangkan sebagai lingkup privat secara konvensi.
-
+    this._validator = validator
+    
     //Mengikat konteks this agar tetap bernilai instance dari NotesHandler(binding) dan tidak menjadi objek dari routes
     this.postNoteHandler = this.postNoteHandler.bind(this);
     this.getNotesHandler = this.getNotesHandler.bind(this);
@@ -13,6 +15,7 @@ class NotesHandler {
   //=========================================================================================
   postNoteHandler(request, h) {
     try {
+      this._validator.validateNotePayload(request.payload) // pemanggilan fungsi this._validator karna fungsi postNoteHandler mendapatkan data dari client dalam bentuk payload
       const { title = "untitled", body, tags } = request.payload; //untuk mendapatkan nilai dari rquest yg dikirim client
 
       const noteId = this._service.addNote({ title, body, tags }); //pemanggilan fungsi this._service.addNote(untuk proses memasukan catatan baru) mengembalikan id catatan yg disimpan dan nilainya ditampung dalam variable noteId
@@ -21,18 +24,29 @@ class NotesHandler {
         status: "success",
         message: "Catatan berhasil ditambahkan",
         data: {
-          noteId,
+          noteId, // Data yg direturn/dikembalikan
         },
       });
-      response.code(201);
+      response.code(201); // statusCode 201 request client berhasil terkirim dan server telah membuat resource baru yg akan dikirim kembali dalam isi response
       return response;
     } catch (error) {
+      if (error instanceof ClientError) {
       const response = h.response({
         status: "fail",
-        message: error.message,
+        message: error.message, // error message default dari instances ClientError
       });
-      response.code(400);
+      response.code(error.statusCode); // error statusCode default 404 dari instances ClientError
       return response;
+    }
+
+    //Server Error
+    const response = h.response({
+      status: 'error',
+      message: 'Maaf, terjadi kegagalan pada server kami.'
+    })
+    response.code(500) // statusCode 500 ada kesalahan di dalam server
+    console.error(error)
+    return response
     }
   }
 
@@ -42,7 +56,7 @@ class NotesHandler {
     return {
       status: "success",
       data: {
-        notes,
+        notes,// data yg direturn/dikembalikan
       },
     };
   }
@@ -55,22 +69,34 @@ class NotesHandler {
       return {
         status: "success",
         data: {
-          note,
+          note, // Data yg direturn/dikembalikan
         },
       };
     } catch (error) {
-      const response = h.response({
-        status: "fail",
-        message: error.message,
-      });
-      response.code(404);
-      return response;
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message, // error message default dari instances ClientError
+        });
+        response.code(error.statusCode); // error statusCode default 404 dari instances ClientError
+        return response;
+      }
+
+      //Server Error
+    const response = h.response({
+      status: 'error',
+      message: 'Maaf, terjadi kegagalan pada server kami.'
+    })
+    response.code(500) // statusCode 500 ada kesalahan di dalam server
+    console.error(error)
+    return response
     }
   }
 
   //=========================================================================================
   putNoteByIdHandler(request,h) {
     try {
+      this._validator.validateNotePayload(request.payload) // pemanggilan fungsi this._validator karna fungsi putNoteByIdHandler mendapatkan data dari client dalam bentuk payload
       const { id } = request.params; //untuk mendapatkan nilai id note yg dikirim client melalui path paramaeter
       this._service.editNoteById(id, request.payload); //pemanggilan fungsi this._service.editNoteById dengan parameter id dan request.payload yg akan menyediakan title,body, tags untuk objek note baru.
 
@@ -79,12 +105,23 @@ class NotesHandler {
         message: "Catatan berhasil diperbarui",
       };
     } catch (error) {
-      const response = h.response({
-        status: "fail",
-        message: error.message,
-      });
-      response.code(404);
-      return response;
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message, // error message default dari instances ClientError
+        });
+        response.code(error.statusCode); // error statusCode default 404 dari instances ClientError
+        return response;
+      }
+
+      //Server Error
+    const response = h.response({
+      status: 'error',
+      message: 'Maaf, terjadi kegagalan pada server kami.'
+    })
+    response.code(500) // statusCode 500 ada kesalahan di dalam server
+    console.error(error)
+    return response
     }
   }
 
@@ -99,12 +136,23 @@ class NotesHandler {
         message: "Catatan berhasil dihapus",
       };
     } catch (error) {
-      const response = h.response({
-        status: "fail",
-        message: "Catatan gagal dihapus. Id tidak ditemukan",
-      });
-      response.code(404);
-      return response;
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message, // error message default dari instances ClientError
+        });
+        response.code(error.statusCode); // error statusCode default 404 dari instances ClientError
+        return response;
+      }
+
+      //Server Error
+    const response = h.response({
+      status: 'error',
+      message: 'Maaf, terjadi kegagalan pada server kami.'
+    })
+    response.code(500) // statusCode 500 ada kesalahan di dalam server
+    console.errpr(error)
+    return response
     }
   }
 }

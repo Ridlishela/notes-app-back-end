@@ -1,6 +1,7 @@
 const Hapi = require("@hapi/hapi");
 const notes = require('./api/notes')//import notes plugin
 const NotesService = require('./services/inMemory/NotesService')
+const NotesValidator = require('./validator/notes')
 
 const init = async () => {
   const notesService = new NotesService() //Instance dari NotesService ditampung dalam variabel notesService
@@ -19,6 +20,7 @@ const init = async () => {
     plugin: notes,//mendaftarkan plugin notes dengan option service
     options: {
       service: notesService,
+      validator: NotesValidator,
     }
   })
 

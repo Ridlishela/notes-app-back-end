@@ -1,4 +1,6 @@
 const { nanoid } = require('nanoid'); //nano-sized unique string ID generator
+const InvariantError = require('../../exceptions/InvariantError');
+const NotFoundError = require('../../exceptions/NotFoundError');
 
 class NotesService {
   //bertanggungjawab untuk mengelola resource notes yg disimpan pada memory (array)
@@ -27,7 +29,8 @@ class NotesService {
     const isSuccess = this._notes.filter((note) => note.id === id).length > 0;
 
     if (!isSuccess) {
-      throw new Error("Catatan gagal ditambahkan"); //jika false maka return error
+      // Menggunakan custom error InvariantError karna pada addNote dilakukan validasi data dari client
+      throw new InvariantError("Catatan gagal ditambahkan"); //jika false maka return error
     }
     return id; //jika true me-return id catatan baru
   }
@@ -44,7 +47,8 @@ class NotesService {
     const note = this._notes.filter((note) => note.id === id)[0]; //untuk mendapatkan note berdasarkan note id dengan fungsi filter, [0] me-return hasil pertama
 
     if (!note) {
-      throw new Error("Catatan tidak ditemukan"); //jika false
+      // Menggunakan custom error NoteFoundError karna pada getNoteById dilakukan pemanggilan data berdasarkan resource yg diberikan client
+      throw new NotFoundError("Catatan tidak ditemukan"); //jika false
     }
     return note; //jika true maka me-return note berdasarkan id
   }
@@ -57,7 +61,8 @@ class NotesService {
     //Mencari catatan dengan id tertentu berdasarkan index dengan fungsi findIndex, hasil disimpan dalam variabel index
 
     if (index === -1) {
-      throw new Error("Gagal memperbarui catatan. Catatan tidak ditemukan");
+      // Menggunakan custom error NoteFoundError karna pada editNoteById dilakukan pemanggilan data berdasarkan resource yg diberikan client
+      throw new NotFoundError("Gagal memperbarui catatan. Catatan tidak ditemukan");
     }
 
     const updatedAt = new Date().toISOString(); //Tanggal dan waktu catatan diubah(current time)
@@ -79,7 +84,8 @@ class NotesService {
     //Mencari catatan dengan id tertentu berdasarkan index dengan fungsi findIndex, hasil disimpan dalam variabel index
 
     if (index === -1) {
-      throw new Error("Catatan gagal dihapus. Id tidak ditemukan"); //hika index false/tidak ditemukan me-return error
+      // Menggunakan custom error NoteFoundError karna pada deleteNoteById dilakukan pemanggilan data berdasarkan resource yg diberikan client
+      throw new NotFoundError("Catatan gagal dihapus. Id tidak ditemukan"); //hika index false/tidak ditemukan me-return error
     }
 
     this._notes.splice(index, 1); //jika index ditemukan/true maka me-return fungsi slice/menghapus pada this._notes
